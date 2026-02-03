@@ -49,6 +49,13 @@
                 <i class="fas fa-chart-line mr-2"></i>Trends
               </button>
               <button
+                @click="currentView = 'resume'"
+                :class="currentView === 'resume' ? 'bg-orange-600' : 'bg-gray-700'"
+                class="px-4 py-2 rounded-lg hover:bg-orange-500 transition"
+              >
+                <i class="fas fa-file-alt mr-2"></i>Resume
+              </button>
+              <button
                 @click="triggerCollection()"
                 class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-500 transition"
               >
@@ -401,6 +408,74 @@
         </div>
       </div>
 
+      <!-- Resume View -->
+      <div x-show="currentView === 'resume'" class="container mx-auto px-4 py-8">
+        <h2 class="text-3xl font-bold mb-6">📄 Resume-Based Scoring</h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Resume Upload/Input -->
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 class="text-xl font-bold mb-4">Upload Your Resume</h3>
+            <p class="text-gray-400 mb-4">Paste your resume text or key skills to personalize job scoring</p>
+            
+            <textarea
+              x-model="resumeText"
+              placeholder="Paste your resume or list your skills (e.g., Python, React, AWS, Machine Learning...)"
+              class="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500 text-gray-100 resize-none"
+            ></textarea>
+            
+            <div class="mt-4 flex space-x-4">
+              <button
+                @click="analyzeResume()"
+                class="flex-1 px-6 py-3 bg-orange-600 rounded-lg hover:bg-orange-500 transition font-semibold"
+              >
+                <i class="fas fa-brain mr-2"></i>Analyze Resume
+              </button>
+              <button
+                @click="clearResume()"
+                class="px-6 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
+              >
+                <i class="fas fa-trash mr-2"></i>Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Extracted Skills -->
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 class="text-xl font-bold mb-4">Extracted Skills & Keywords</h3>
+            
+            <div x-show="!resumeSkills.length" class="text-center py-12 text-gray-400">
+              <i class="fas fa-inbox text-6xl mb-4"></i>
+              <p>No skills extracted yet. Add your resume to get started.</p>
+            </div>
+
+            <div x-show="resumeSkills.length" class="space-y-4">
+              <div>
+                <p class="text-sm text-gray-400 mb-2">Technical Skills:</p>
+                <div class="flex flex-wrap gap-2">
+                  <template x-for="skill in resumeSkills" :key="skill">
+                    <span class="px-3 py-1 bg-orange-600 rounded-full text-sm" x-text="skill"></span>
+                  </template>
+                </div>
+              </div>
+
+              <div class="mt-4 p-4 bg-gray-700 rounded-lg">
+                <p class="text-sm text-gray-400 mb-2">🎯 Scoring Impact:</p>
+                <p class="text-gray-300">Jobs matching your skills will receive <span class="text-orange-400 font-bold">+20 bonus points</span></p>
+                <p class="text-sm text-gray-400 mt-2">Threshold updated: Jobs scoring <span class="text-green-400 font-bold">60+</span> will trigger alerts</p>
+              </div>
+
+              <button
+                @click="rescoreAllJobs()"
+                class="w-full px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500 transition font-semibold"
+              >
+                <i class="fas fa-sync-alt mr-2"></i>Re-score All Jobs with Resume
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Loading Overlay -->
       <div
         x-show="loading"
@@ -440,6 +515,7 @@
           filters: {
             search: "",
             minScore: 0,
+            source: "",
           },
           toast: {
             show: false,
@@ -447,8 +523,17 @@
             type: "success",
           },
           apiBaseUrl: "http://localhost:8000",
+          resumeText: "",
+          resumeSkills: [],
 
           async init() {
+            // Load saved resume if exists
+            const savedResume = localStorage.getItem('signalforge_resume');
+            if (savedResume) {
+              this.resumeText = savedResume;
+              this.analyzeResume();
+            }
+            
             await this.fetchStats();
             await this.fetchJobs();
             await this.fetchTrends();
