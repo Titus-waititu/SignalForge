@@ -2,33 +2,68 @@ version: "3.8"
 
 services:
   signalforge:
-    build: .
-    container_name: signalforge
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: signalforge-app
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:///signalforge.db
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
-      - ALERT_THRESHOLD=70
-      - LOG_LEVEL=INFO
+      - DB_URL=sqlite:////app/data/signalforge.db
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      - ENABLE_ALERTS=${ENABLE_ALERTS:-false}
+      - ALERT_THRESHOLD=${ALERT_THRESHOLD:-70}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - signalforge-network
 
-  # Optional: PostgreSQL database
+  # Optional: PostgreSQL database for production
+  # Uncomment to use PostgreSQL instead of SQLite
   # postgres:
-  #   image: postgres:15
+  #   image: postgres:15-alpine
   #   container_name: signalforge-db
   #   environment:
   #     - POSTGRES_DB=signalforge
   #     - POSTGRES_USER=signalforge
-  #     - POSTGRES_PASSWORD=signalforge
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-signalforge123}
   #   volumes:
   #     - postgres-data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U signalforge"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - signalforge-network
+
+  # Optional: Redis for caching and rate limiting
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: signalforge-redis
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
   #   networks:
   #     - signalforge-network
 

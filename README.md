@@ -201,30 +201,196 @@ curl http://localhost:8000/jobs/stats/summary
 
 ## 🐳 Docker Deployment
 
-### Build and Run
+SignalForge is fully containerized and production-ready with Docker!
+
+### Quick Deploy (Automated)
+
+#### Windows
+```powershell
+# One-command deployment
+.\deploy.ps1
+```
+
+#### Linux/Mac
+```bash
+# One-command deployment
+chmod +x deploy.sh
+./deploy.sh
+```
+
+### Manual Docker Deployment
+
+#### Option 1: Docker Compose (Recommended)
+
+```bash
+# 1. Create required directories
+mkdir -p data logs
+
+# 2. Configure environment
+cp .env.docker .env
+# Edit .env with your settings (Telegram tokens, etc.)
+
+# 3. Start services
+docker-compose up -d
+
+# 4. View logs
+docker-compose logs -f signalforge
+
+# 5. Check status
+docker-compose ps
+
+# Access dashboard at http://localhost:8000
+```
+
+#### Option 2: Plain Docker
 
 ```bash
 # Build image
-docker build -t signalforge .
+docker build -t signalforge:latest .
 
 # Run container
-docker run -d -p 8000:8000 --env-file .env signalforge
-
-# Or use docker-compose
-docker-compose up -d
-```
-
-### Docker Compose
-
-```bash
-# Start services
-docker-compose up -d
+docker run -d \
+  --name signalforge \
+  -p 8000:8000 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/logs:/app/logs \
+  --env-file .env \
+  signalforge:latest
 
 # View logs
-docker-compose logs -f
+docker logs -f signalforge
 
-# Stop services
-docker-compose down
+# Access dashboard at http://localhost:8000
+```
+
+### Container Management
+
+```bash
+# View running containers
+docker ps
+
+# Stop SignalForge
+docker-compose stop
+
+# Restart SignalForge
+docker-compose restart
+
+# Update to latest code
+git pull
+docker-compose build
+docker-compose up -d
+
+# Remove containers and volumes
+docker-compose down -v
+
+# Access container shell
+docker exec -it signalforge-app sh
+
+# Run CLI commands inside container
+docker exec signalforge-app python main.py stats
+docker exec signalforge-app python main.py collect
+```
+
+### Production Deployment
+
+For production, consider these enhancements:
+
+1. **Use PostgreSQL** instead of SQLite:
+   ```yaml
+   # Uncomment postgres service in docker-compose.yml
+   # Update DB_URL in .env:
+   DB_URL=postgresql://signalforge:password@postgres:5432/signalforge
+   ```
+
+2. **Enable HTTPS** with a reverse proxy (nginx/traefik)
+
+3. **Set resource limits** in docker-compose.yml:
+   ```yaml
+   deploy:
+     resources:
+       limits:
+         cpus: '1.0'
+         memory: 1G
+   ```
+
+4. **Configure log rotation** for production logs
+
+5. **Set up monitoring** with health checks and alerts
+
+### Docker Architecture
+
+```
+┌─────────────────────────────────────┐
+│   SignalForge Container             │
+│                                     │
+│  ┌────────────┐  ┌──────────────┐  │
+│  │ Scheduler  │  │   FastAPI    │  │
+│  │ (Cron)     │  │   (Web UI)   │  │
+│  └────────────┘  └──────────────┘  │
+│         │                │          │
+│  ┌──────▼────────────────▼───────┐ │
+│  │   SQLite Database (Volume)    │ │
+│  └───────────────────────────────┘ │
+│                                     │
+│  Volumes:                           │
+│  - /app/data  (database)           │
+│  - /app/logs  (logs)               │
+└─────────────────────────────────────┘
+        │
+        └──── Port 8000 → localhost:8000
+```
+
+### Environment Variables
+
+Key environment variables for Docker:
+
+```bash
+# Database
+DB_URL=sqlite:////app/data/signalforge.db
+
+# Telegram Alerts (Optional)
+ENABLE_ALERTS=false
+TELEGRAM_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+
+# Alert Configuration
+ALERT_THRESHOLD=70
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FILE=/app/logs/signalforge.log
+
+# API Settings
+API_HOST=0.0.0.0
+API_PORT=8000
+
+# Scheduler
+COLLECTION_INTERVAL=3600
+```
+
+### Troubleshooting
+
+**Container won't start:**
+```bash
+# Check logs
+docker-compose logs signalforge
+
+# Check if port is in use
+netstat -an | grep 8000  # Linux/Mac
+netstat -ano | findstr :8000  # Windows
+```
+
+**Database permission issues:**
+```bash
+# Fix permissions
+sudo chown -R 1000:1000 data logs
+```
+
+**Reset everything:**
+```bash
+docker-compose down -v
+rm -rf data/* logs/*
+docker-compose up -d
 ```
 
 ---
