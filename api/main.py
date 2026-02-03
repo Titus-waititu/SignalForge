@@ -3,10 +3,14 @@ SignalForge REST API
 FastAPI service for accessing jobs and signals
 """
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from typing import List, Optional
 from datetime import datetime, timedelta
+from pathlib import Path
 import logging
 
 from storage.db import get_db
@@ -20,12 +24,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Setup paths
+BASE_DIR = Path(__file__).parent.parent
+WEB_DIR = BASE_DIR / "web"
+TEMPLATES_DIR = WEB_DIR / "templates"
+STATIC_DIR = WEB_DIR / "static"
+
 # Initialize FastAPI app
 app = FastAPI(
     title="SignalForge API",
     description="Real-time signal engine for jobs, trends, and market patterns",
     version="1.0.0"
 )
+
+# Mount static files if directory exists
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# Setup templates
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR)) if TEMPLATES_DIR.exists() else None
 
 # Add CORS middleware
 app.add_middleware(
@@ -46,9 +63,17 @@ async def startup_event():
     logger.info("Database tables initialized")
 
 
-@app.get("/")
-async def root():
-    """Root endpoint"""
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    """Root endpoint - serve dashboard"""
+    if templates:
+        return templates.TemplateResponse("index.html", {"request": request})
+    return HTMLResponse(content="<h1>SignalForge API - Dashboard not available</h1>")
+
+
+@app.get("/api")
+async def api_root():
+    """API root endpoint"""
     return {
         "name": "SignalForge API",
         "version": "1.0.0",
@@ -59,10 +84,10 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 
-@app.get("/jobs", response_model=List[dict])
+@app.get("/api/jobs")
 async def list_jobs(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -110,10 +135,16 @@ async def list_jobs(
         # Apply pagination
         jobs = query.offset(offset).limit(limit).all()
         
-        return [job.to_dict() for job in jobs]
+        # Convert to dict and return with metadata
+        return {
+            "jobs": [job.to_dict() for job in jobs],
+            "count": len(jobs),
+            "limit": limit,
+            "offset": offset
+        }
 
 
-@app.get("/jobs/{job_id}")
+@app.get("/api/jobs/{job_id}")
 async def get_job(job_id: str):
     """
     Get a specific job by ID
@@ -132,22 +163,31 @@ async def get_job(job_id: str):
         return job.to_dict()
 
 
-@app.get("/jobs/stats/summary")
+@app.get("/api/jobs/stats/summary")
 async def get_jobs_stats():
     """Get job statistics"""
     db = get_db()
     
     with db.get_session() as session:
+        from sqlalchemy import func
+        
         total_jobs = session.query(Job).count()
         high_score_jobs = session.query(Job).filter(Job.score >= config.ALERT_THRESHOLD).count()
         alerted_jobs = session.query(Job).filter(Job.alerted == 1).count()
         
+        # Calculate average score
+        avg_score = session.query(func.avg(Job.score)).scalar() or 0
+        
         # Recent jobs (last 7 days)
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        seven_days_ago = datetime.now() - timedelta(days=7)
         recent_jobs = session.query(Job).filter(Job.posted_at >= seven_days_ago).count()
         
+        # Count remote jobs
+        remote_jobs = session.query(Job).filter(
+            Job.location.ilike('%remote%')
+        ).count()
+        
         # Top companies
-        from sqlalchemy import func
         top_companies = session.query(
             Job.company,
             func.count(Job.id).label('count')
@@ -161,15 +201,17 @@ async def get_jobs_stats():
         
         return {
             "total_jobs": total_jobs,
-            "high_score_jobs": high_score_jobs,
+            "high_score_count": high_score_jobs,
             "alerted_jobs": alerted_jobs,
             "recent_jobs": recent_jobs,
+            "average_score": float(avg_score),
+            "remote_jobs": remote_jobs,
             "top_companies": [{"company": c, "count": cnt} for c, cnt in top_companies],
             "top_locations": [{"location": l, "count": cnt} for l, cnt in top_locations]
         }
 
 
-@app.get("/signals", response_model=List[dict])
+@app.get("/api/signals")
 async def list_signals(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -202,7 +244,7 @@ async def list_signals(
         return [signal.to_dict() for signal in signals]
 
 
-@app.get("/signals/{signal_id}")
+@app.get("/api/signals/{signal_id}")
 async def get_signal(signal_id: str):
     """Get a specific signal by ID"""
     db = get_db()
