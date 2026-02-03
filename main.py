@@ -233,5 +233,67 @@ def version():
     click.echo("  - Andreas Tailas")
 
 
+@cli.command()
+def trends():
+    """Analyze job market trends"""
+    try:
+        from storage.db import get_db
+        from storage.models import Job
+        from processors.trends import TrendDetector
+        
+        logger.info("📈 Analyzing job market trends...")
+        
+        db = get_db()
+        with db.get_session() as session:
+            # Get all jobs
+            jobs = session.query(Job).all()
+            jobs_data = [job.to_dict() for job in jobs]
+        
+        if not jobs_data:
+            logger.warning("No jobs in database. Run 'python main.py collect' first.")
+            return
+        
+        detector = TrendDetector()
+        trends_data = detector.analyze_trends(jobs_data)
+        anomalies = detector.detect_anomalies(jobs_data)
+        
+        # Display trends
+        logger.info(f"\n{'='*80}")
+        logger.info(f"📊 JOB MARKET TRENDS ANALYSIS")
+        logger.info(f"{'='*80}\n")
+        
+        logger.info(f"📈 Total Jobs Analyzed: {trends_data.get('total_jobs_analyzed', 0)}")
+        logger.info(f"🔥 Recent Jobs (3 days): {trends_data.get('recent_job_count', 0)}\n")
+        
+        logger.info("🔝 TOP TRENDING KEYWORDS:")
+        for keyword, count in trends_data.get('trending_keywords', [])[:10]:
+            logger.info(f"  {keyword}: {count} jobs")
+        
+        logger.info("\n💻 TOP TECHNOLOGIES:")
+        for tech, count in trends_data.get('top_technologies', [])[:10]:
+            logger.info(f"  {tech}: {count} mentions")
+        
+        logger.info("\n🏢 TOP HIRING COMPANIES:")
+        for company, count in trends_data.get('top_hiring_companies', [])[:10]:
+            logger.info(f"  {company}: {count} positions")
+        
+        logger.info("\n📍 TOP LOCATIONS:")
+        for location, count in trends_data.get('top_locations', [])[:10]:
+            logger.info(f"  {location}: {count} jobs")
+        
+        if anomalies:
+            logger.info(f"\n⚠️  ANOMALIES DETECTED ({len(anomalies)}):")
+            for anomaly in anomalies[:5]:
+                job = anomaly['job']
+                logger.info(f"  🔥 {job['title']} at {job['company']}")
+                logger.info(f"     Score: {job['score']} - {anomaly['reason']}")
+        
+        logger.info(f"\n{'='*80}\n")
+        
+    except Exception as e:
+        logger.error(f"❌ Trends analysis failed: {e}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     cli()

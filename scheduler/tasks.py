@@ -50,8 +50,21 @@ class TaskScheduler:
                 RemoteOKCollector(),
                 # Add more collectors here
             ]
+            
+            # Try importing additional collectors
+            try:
+                from collectors.jobs.weworkremotely import WeWorkRemotelyCollector
+                self.collectors.append(WeWorkRemotelyCollector())
+            except Exception as e:
+                logger.warning(f"Could not load WeWorkRemotely collector: {e}")
+            
+            try:
+                from collectors.jobs.linkedin_scraper import LinkedInJobsCollector
+                self.collectors.append(LinkedInJobsCollector())
+            except Exception as e:
+                logger.warning(f"Could not load LinkedIn collector: {e}")
         
-        logger.info("TaskScheduler initialized")
+        logger.info(f"TaskScheduler initialized with {len(self.collectors)} collectors")
     
     def start(self):
         """Start the scheduler"""
@@ -106,7 +119,7 @@ class TaskScheduler:
         logger.info("Scheduler stopped")
     
     async def collect_and_process_jobs(self):
-        """Main pipeline: collect → normalize → score → store → alert"""
+        """Main pipeline: collect → normalize → score → store → alert → trends"""
         logger.info("=== Starting job collection pipeline ===")
         
         try:
@@ -142,6 +155,24 @@ class TaskScheduler:
                     logger.error(f"Error processing job: {e}")
             
             logger.info(f"Processed {len(processed_jobs)} jobs")
+            
+            # Step 3.5: Trend Analysis
+            try:
+                from processors.trends import TrendDetector
+                trend_detector = TrendDetector()
+                trends = trend_detector.analyze_trends(processed_jobs)
+                anomalies = trend_detector.detect_anomalies(processed_jobs)
+                
+                if trends:
+                    logger.info(f"📈 Top trending tech: {trends.get('trending_keywords', [])[:3]}")
+                
+                if anomalies:
+                    logger.warning(f"⚠️ Detected {len(anomalies)} anomalies")
+                    for anomaly in anomalies[:3]:  # Log top 3
+                        job = anomaly.get('job', {})
+                        logger.warning(f"  - {job.get('title')} at {job.get('company')} (Score: {job.get('score')})")
+            except Exception as e:
+                logger.error(f"Error in trend analysis: {e}")
             
             # Step 4: Store in database
             high_score_jobs = []
