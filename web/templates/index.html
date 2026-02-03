@@ -183,6 +183,15 @@
               class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500"
             />
             <select
+              x-model="filters.source"
+              @change="fetchJobs()"
+              class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500"
+            >
+              <option value="">All Sources</option>
+              <option value="remoteok">RemoteOK</option>
+              <option value="linkedin">LinkedIn</option>
+            </select>
+            <select
               x-model="filters.minScore"
               @change="fetchJobs()"
               class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500"
@@ -437,6 +446,7 @@
             message: "",
             type: "success",
           },
+          apiBaseUrl: "http://localhost:8000",
 
           async init() {
             await this.fetchStats();
@@ -446,7 +456,9 @@
 
           async fetchStats() {
             try {
-              const response = await fetch("/api/jobs/stats/summary");
+              const response = await fetch(
+                `${this.apiBaseUrl}/api/jobs/stats/summary`,
+              );
               this.stats = await response.json();
             } catch (error) {
               console.error("Error fetching stats:", error);
@@ -456,7 +468,7 @@
           async fetchJobs() {
             this.loading = true;
             try {
-              let url = `/api/jobs?limit=100`;
+              let url = `${this.apiBaseUrl}/api/jobs?limit=100`;
               if (this.filters.minScore > 0) {
                 url += `&min_score=${this.filters.minScore}`;
               }
@@ -496,9 +508,15 @@
 
               // Count tech stack
               if (job.stack) {
-                const stackItems = job.stack.split(",");
+                let stackItems = [];
+                if (typeof job.stack === "string") {
+                  stackItems = job.stack.split(",");
+                } else if (Array.isArray(job.stack)) {
+                  stackItems = job.stack;
+                }
+
                 stackItems.forEach((tech) => {
-                  const t = tech.trim().toLowerCase();
+                  const t = String(tech).trim().toLowerCase();
                   if (t) techs[t] = (techs[t] || 0) + 1;
                 });
               }

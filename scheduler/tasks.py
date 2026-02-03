@@ -48,16 +48,9 @@ class TaskScheduler:
         else:
             self.collectors = [
                 RemoteOKCollector(),
-                # Add more collectors here
             ]
             
-            # Try importing additional collectors
-            try:
-                from collectors.jobs.weworkremotely import WeWorkRemotelyCollector
-                self.collectors.append(WeWorkRemotelyCollector())
-            except Exception as e:
-                logger.warning(f"Could not load WeWorkRemotely collector: {e}")
-            
+            # Try importing LinkedIn collector
             try:
                 from collectors.jobs.linkedin_scraper import LinkedInJobsCollector
                 self.collectors.append(LinkedInJobsCollector())
