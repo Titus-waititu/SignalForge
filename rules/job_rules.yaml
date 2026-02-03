@@ -1,0 +1,55 @@
+# SignalForge Job Scoring Rules
+# Define how jobs are scored and filtered
+
+# Keywords to match (used in scoring)
+keywords:
+  - python
+  - backend
+  - ai
+  - ml
+  - machine learning
+  - data
+  - engineer
+  - developer
+  - fastapi
+  - django
+  - flask
+  - postgresql
+  - docker
+  - kubernetes
+  - aws
+  - azure
+
+# Minimum score threshold for alerts
+min_score: 70
+
+# Maximum age of jobs to consider (in days)
+max_age_days: 7
+
+# Preferred locations
+locations:
+  - remote
+  - kenya
+  - nairobi
+  - africa
+  - anywhere
+  - global
+
+# Scoring weights (total should be 100)
+weights:
+  freshness: 30 # How recent the job was posted
+  keyword: 40 # Match with keywords in title/description
+  stack: 20 # Tech stack relevance
+  location: 10 # Location preference match
+
+# Blacklist (exclude jobs with these terms)
+blacklist:
+  - unpaid
+  - volunteer
+  - intern
+
+# Experience level preferences (optional filter)
+experience_levels:
+  - junior
+  - mid
+  - senior

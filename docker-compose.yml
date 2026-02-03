@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  signalforge:
+    build: .
+    container_name: signalforge
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///signalforge.db
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - ALERT_THRESHOLD=70
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - signalforge-network
+
+  # Optional: PostgreSQL database
+  # postgres:
+  #   image: postgres:15
+  #   container_name: signalforge-db
+  #   environment:
+  #     - POSTGRES_DB=signalforge
+  #     - POSTGRES_USER=signalforge
+  #     - POSTGRES_PASSWORD=signalforge
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - signalforge-network
+
+networks:
+  signalforge-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
