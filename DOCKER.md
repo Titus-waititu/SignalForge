@@ -15,12 +15,14 @@
 ### Method 1: Automated Deployment (Easiest) ⭐
 
 #### Windows:
+
 ```powershell
 # Start Docker Desktop first, then run:
 .\deploy.ps1
 ```
 
 #### Linux/Mac:
+
 ```bash
 # Start Docker daemon first, then run:
 chmod +x deploy.sh
@@ -28,6 +30,7 @@ chmod +x deploy.sh
 ```
 
 The script will:
+
 - ✅ Check Docker is running
 - ✅ Create required directories
 - ✅ Set up environment file
@@ -76,16 +79,19 @@ docker run -d \
 After deployment, verify everything is working:
 
 1. **Check container is running:**
+
    ```bash
    docker ps | grep signalforge
    ```
 
 2. **Check health:**
+
    ```bash
    curl http://localhost:8000/health
    ```
 
 3. **View logs:**
+
    ```bash
    docker-compose logs -f signalforge
    ```
@@ -130,16 +136,21 @@ docker-compose up -d
 ## Troubleshooting
 
 ### Docker not running
+
 ```
 Error: failed to connect to docker API
 ```
+
 **Solution:** Start Docker Desktop application
 
 ### Port already in use
+
 ```
 Error: port 8000 is already allocated
 ```
-**Solution:** 
+
+**Solution:**
+
 ```bash
 # Stop any process using port 8000
 # Windows:
@@ -155,10 +166,13 @@ ports:
 ```
 
 ### Permission denied on data/logs
+
 ```
 Error: permission denied
 ```
+
 **Solution:**
+
 ```bash
 # Linux/Mac:
 sudo chown -R $USER:$USER data logs
@@ -168,17 +182,21 @@ sudo docker-compose up -d
 ```
 
 ### Container immediately stops
+
 **Solution:** Check logs for errors
+
 ```bash
 docker-compose logs signalforge
 ```
 
 Common issues:
+
 - Missing environment variables
 - Database migration needed
 - Port conflicts
 
 ### Reset everything
+
 ```bash
 # Stop and remove containers
 docker-compose down -v
@@ -200,6 +218,7 @@ For production, make these changes:
    - Update `DB_URL` in `.env`
 
 2. **Enable alerts:**
+
    ```bash
    ENABLE_ALERTS=true
    TELEGRAM_TOKEN=your_real_token
@@ -207,6 +226,7 @@ For production, make these changes:
    ```
 
 3. **Add reverse proxy (nginx/Caddy):**
+
    ```yaml
    # docker-compose.yml
    nginx:
@@ -219,11 +239,12 @@ For production, make these changes:
    ```
 
 4. **Set resource limits:**
+
    ```yaml
    deploy:
      resources:
        limits:
-         cpus: '2'
+         cpus: "2"
          memory: 2G
    ```
 

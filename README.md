@@ -206,12 +206,14 @@ SignalForge is fully containerized and production-ready with Docker!
 ### Quick Deploy (Automated)
 
 #### Windows
+
 ```powershell
 # One-command deployment
 .\deploy.ps1
 ```
 
 #### Linux/Mac
+
 ```bash
 # One-command deployment
 chmod +x deploy.sh
@@ -296,6 +298,7 @@ docker exec signalforge-app python main.py collect
 For production, consider these enhancements:
 
 1. **Use PostgreSQL** instead of SQLite:
+
    ```yaml
    # Uncomment postgres service in docker-compose.yml
    # Update DB_URL in .env:
@@ -305,11 +308,12 @@ For production, consider these enhancements:
 2. **Enable HTTPS** with a reverse proxy (nginx/traefik)
 
 3. **Set resource limits** in docker-compose.yml:
+
    ```yaml
    deploy:
      resources:
        limits:
-         cpus: '1.0'
+         cpus: "1.0"
          memory: 1G
    ```
 
@@ -371,6 +375,7 @@ COLLECTION_INTERVAL=3600
 ### Troubleshooting
 
 **Container won't start:**
+
 ```bash
 # Check logs
 docker-compose logs signalforge
@@ -381,12 +386,14 @@ netstat -ano | findstr :8000  # Windows
 ```
 
 **Database permission issues:**
+
 ```bash
 # Fix permissions
 sudo chown -R 1000:1000 data logs
 ```
 
 **Reset everything:**
+
 ```bash
 docker-compose down -v
 rm -rf data/* logs/*
