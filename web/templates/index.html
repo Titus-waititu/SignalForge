@@ -139,7 +139,10 @@
                 <div class="flex items-start justify-between mb-3">
                   <div class="flex-1">
                     <div class="flex items-center space-x-2 mb-2">
-                      <h4 class="font-bold text-xl text-white" x-text="job.title"></h4>
+                      <h4
+                        class="font-bold text-xl text-white"
+                        x-text="job.title"
+                      ></h4>
                       <span
                         class="px-2 py-1 rounded-full text-xs font-semibold"
                         :class="job.source === 'remoteok' ? 'bg-blue-600 text-blue-100' : 'bg-purple-600 text-purple-100'"
@@ -148,11 +151,18 @@
                     </div>
                     <div class="flex items-center space-x-2 mb-2">
                       <i class="fas fa-building text-orange-500 text-sm"></i>
-                      <p class="text-gray-300 font-medium" x-text="job.company"></p>
+                      <p
+                        class="text-gray-300 font-medium"
+                        x-text="job.company"
+                      ></p>
                     </div>
-                    <div class="flex items-center space-x-4 text-sm text-gray-400">
+                    <div
+                      class="flex items-center space-x-4 text-sm text-gray-400"
+                    >
                       <span>
-                        <i class="fas fa-map-marker-alt mr-1 text-orange-500"></i>
+                        <i
+                          class="fas fa-map-marker-alt mr-1 text-orange-500"
+                        ></i>
                         <span x-text="job.location"></span>
                       </span>
                       <span>
@@ -170,12 +180,17 @@
                     <p class="text-xs text-gray-400 uppercase">score</p>
                   </div>
                 </div>
-                
+
                 <!-- Tech Stack -->
                 <div x-show="job.stack && job.stack.length > 0" class="mb-3">
                   <div class="flex flex-wrap gap-2">
-                    <template x-for="tech in (Array.isArray(job.stack) ? job.stack.slice(0, 5) : job.stack.split(',').slice(0, 5))" :key="tech">
-                      <span class="px-2 py-1 bg-gray-600 text-gray-200 rounded-full text-xs border border-gray-500">
+                    <template
+                      x-for="tech in (Array.isArray(job.stack) ? job.stack.slice(0, 5) : job.stack.split(',').slice(0, 5))"
+                      :key="tech"
+                    >
+                      <span
+                        class="px-2 py-1 bg-gray-600 text-gray-200 rounded-full text-xs border border-gray-500"
+                      >
                         <span x-text="tech.trim()"></span>
                       </span>
                     </template>
@@ -184,7 +199,10 @@
 
                 <!-- Description Preview -->
                 <div x-show="job.description" class="mb-3">
-                  <p class="text-gray-300 text-sm leading-relaxed" x-text="job.description ? job.description.substring(0, 150) + '...' : ''"></p>
+                  <p
+                    class="text-gray-300 text-sm leading-relaxed"
+                    x-text="job.description ? job.description.substring(0, 150) + '...' : ''"
+                  ></p>
                 </div>
 
                 <!-- Action Button -->
@@ -340,7 +358,10 @@
               <div class="flex items-start justify-between mb-4">
                 <div class="flex-1">
                   <div class="flex items-center flex-wrap gap-3 mb-2">
-                    <h3 class="text-2xl font-bold text-white" x-text="job.title"></h3>
+                    <h3
+                      class="text-2xl font-bold text-white"
+                      x-text="job.title"
+                    ></h3>
                     <span
                       class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
                       :class="job.source === 'remoteok' ? 'bg-blue-600 text-blue-100' : 'bg-purple-600 text-purple-100'"
@@ -349,7 +370,10 @@
                   </div>
                   <div class="flex items-center space-x-2 mb-3">
                     <i class="fas fa-building text-orange-500"></i>
-                    <p class="text-lg text-gray-200 font-medium" x-text="job.company"></p>
+                    <p
+                      class="text-lg text-gray-200 font-medium"
+                      x-text="job.company"
+                    ></p>
                   </div>
                 </div>
                 <!-- Score Badge -->
@@ -359,7 +383,9 @@
                     :class="job.score >= 70 ? 'text-green-400' : job.score >= 50 ? 'text-yellow-400' : 'text-gray-400'"
                     x-text="job.score"
                   ></div>
-                  <div class="text-xs text-gray-400 uppercase tracking-wider">Score</div>
+                  <div class="text-xs text-gray-400 uppercase tracking-wider">
+                    Score
+                  </div>
                 </div>
               </div>
 
@@ -379,11 +405,19 @@
               <div x-show="job.stack && job.stack.length > 0" class="mb-4">
                 <div class="flex items-center space-x-2 mb-2">
                   <i class="fas fa-code text-orange-500"></i>
-                  <span class="text-sm text-gray-400 font-semibold uppercase tracking-wide">Tech Stack</span>
+                  <span
+                    class="text-sm text-gray-400 font-semibold uppercase tracking-wide"
+                    >Tech Stack</span
+                  >
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <template x-for="tech in (Array.isArray(job.stack) ? job.stack : job.stack.split(','))" :key="tech">
-                    <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-medium border border-gray-600 hover:border-orange-500 transition">
+                  <template
+                    x-for="tech in (Array.isArray(job.stack) ? job.stack : job.stack.split(','))"
+                    :key="tech"
+                  >
+                    <span
+                      class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-medium border border-gray-600 hover:border-orange-500 transition"
+                    >
                       <span x-text="tech.trim()"></span>
                     </span>
                   </template>
@@ -394,9 +428,12 @@
               <div x-show="job.description" class="mb-4">
                 <div class="flex items-center space-x-2 mb-2">
                   <i class="fas fa-file-alt text-orange-500"></i>
-                  <span class="text-sm text-gray-400 font-semibold uppercase tracking-wide">Description</span>
+                  <span
+                    class="text-sm text-gray-400 font-semibold uppercase tracking-wide"
+                    >Description</span
+                  >
                 </div>
-                <div 
+                <div
                   class="text-gray-300 leading-relaxed bg-gray-900/50 rounded-lg p-4 border border-gray-700"
                   x-html="job.description ? job.description.substring(0, 500) + (job.description.length > 500 ? '...' : '') : 'No description available'"
                 ></div>
