@@ -103,7 +103,9 @@ class Scorer:
         if not isinstance(posted_at, datetime):
             return 0
         
-        age_days = (datetime.utcnow() - posted_at).days
+        # Handle both timezone-aware and naive datetimes
+        now = datetime.now(posted_at.tzinfo) if posted_at.tzinfo else datetime.now()
+        age_days = (now - posted_at).days
         
         if age_days < 0:
             age_days = 0

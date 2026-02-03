@@ -50,7 +50,13 @@ class TrendDetector:
                 # Count technologies
                 stack = job.get("stack", "")
                 if stack:
-                    techs = [t.strip().lower() for t in stack.split(",")]
+                    # Handle both string and list formats
+                    if isinstance(stack, str):
+                        techs = [t.strip().lower() for t in stack.split(",") if t.strip()]
+                    elif isinstance(stack, list):
+                        techs = [str(t).strip().lower() for t in stack if t]
+                    else:
+                        techs = []
                     stack_counter.update(techs)
                 
                 # Count keywords in title
