@@ -124,6 +124,14 @@ def _normalize_date(date_value: Any) -> datetime:
         return date_value
     
     if isinstance(date_value, str):
+        # Try ISO format with timezone first (most common)
+        try:
+            # Handle ISO 8601 format with timezone (e.g., 2026-02-02T07:00:28+00:00)
+            from dateutil import parser
+            return parser.isoparse(date_value)
+        except:
+            pass
+        
         # Try various date formats
         formats = [
             "%Y-%m-%d",
@@ -140,9 +148,16 @@ def _normalize_date(date_value: Any) -> datetime:
             except ValueError:
                 continue
     
+    # Try integer timestamp
+    if isinstance(date_value, (int, float)):
+        try:
+            return datetime.fromtimestamp(date_value)
+        except:
+            pass
+    
     # Default to now if can't parse
     logger.warning(f"Could not parse date: {date_value}, using current time")
-    return datetime.utcnow()
+    return datetime.now()
 
 
 def normalize_signal(raw_data: Dict[str, Any], signal_type: str) -> Dict[str, Any]:
