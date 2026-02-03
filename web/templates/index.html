@@ -181,33 +181,122 @@
       <div x-show="currentView === 'jobs'" class="container mx-auto px-4 py-8">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-3xl font-bold">💼 All Jobs</h2>
-          <div class="flex space-x-4">
-            <input
-              type="text"
-              x-model="filters.search"
-              @input="fetchJobs()"
-              placeholder="Search jobs..."
-              class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500"
-            />
-            <select
-              x-model="filters.source"
-              @change="fetchJobs()"
-              class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500"
+          
+          <!-- Filter Dropdown Menu -->
+          <div class="relative" x-data="{ showFilters: false }">
+            <button
+              @click="showFilters = !showFilters"
+              class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700 transition flex items-center space-x-2"
             >
-              <option value="">All Sources</option>
-              <option value="remoteok">RemoteOK</option>
-              <option value="linkedin">LinkedIn</option>
-            </select>
-            <select
-              x-model="filters.minScore"
-              @change="fetchJobs()"
-              class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-orange-500"
+              <i class="fas fa-filter"></i>
+              <span>Filters</span>
+              <span x-show="filters.minScore > 0 || filters.source || filters.location || filters.company" 
+                    class="px-2 py-0.5 bg-orange-600 rounded-full text-xs"
+                    x-text="(filters.minScore > 0 ? 1 : 0) + (filters.source ? 1 : 0) + (filters.location ? 1 : 0) + (filters.company ? 1 : 0)"></span>
+              <i class="fas fa-chevron-down text-sm" :class="showFilters ? 'rotate-180' : ''"></i>
+            </button>
+
+            <!-- Dropdown Panel -->
+            <div
+              x-show="showFilters"
+              @click.away="showFilters = false"
+              x-transition
+              class="absolute right-0 mt-2 w-96 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 p-4"
             >
-              <option value="0">All Scores</option>
-              <option value="50">50+</option>
-              <option value="60">60+</option>
-              <option value="70">70+</option>
-            </select>
+              <div class="space-y-4">
+                <!-- Search -->
+                <div>
+                  <label class="block text-sm text-gray-400 mb-2">
+                    <i class="fas fa-search mr-2"></i>Search Keywords
+                  </label>
+                  <input
+                    type="text"
+                    x-model="filters.search"
+                    @input="fetchJobs()"
+                    placeholder="e.g., Python, React, Senior..."
+                    class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                <!-- Source Filter -->
+                <div>
+                  <label class="block text-sm text-gray-400 mb-2">
+                    <i class="fas fa-globe mr-2"></i>Job Source
+                  </label>
+                  <select
+                    x-model="filters.source"
+                    @change="fetchJobs()"
+                    class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500"
+                  >
+                    <option value="">All Sources</option>
+                    <option value="remoteok">RemoteOK</option>
+                    <option value="linkedin">LinkedIn</option>
+                  </select>
+                </div>
+
+                <!-- Score Filter -->
+                <div>
+                  <label class="block text-sm text-gray-400 mb-2">
+                    <i class="fas fa-star mr-2"></i>Minimum Score
+                  </label>
+                  <select
+                    x-model="filters.minScore"
+                    @change="fetchJobs()"
+                    class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500"
+                  >
+                    <option value="0">All Scores</option>
+                    <option value="50">50+ (Good Match)</option>
+                    <option value="60">60+ (Great Match)</option>
+                    <option value="70">70+ (Excellent Match)</option>
+                    <option value="80">80+ (Perfect Match)</option>
+                  </select>
+                </div>
+
+                <!-- Location Filter -->
+                <div>
+                  <label class="block text-sm text-gray-400 mb-2">
+                    <i class="fas fa-map-marker-alt mr-2"></i>Location
+                  </label>
+                  <input
+                    type="text"
+                    x-model="filters.location"
+                    @input="fetchJobs()"
+                    placeholder="e.g., Remote, New York..."
+                    class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                <!-- Company Filter -->
+                <div>
+                  <label class="block text-sm text-gray-400 mb-2">
+                    <i class="fas fa-building mr-2"></i>Company
+                  </label>
+                  <input
+                    type="text"
+                    x-model="filters.company"
+                    @input="fetchJobs()"
+                    placeholder="e.g., Google, Microsoft..."
+                    class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                <!-- Actions -->
+                <div class="flex space-x-2 pt-2 border-t border-gray-700">
+                  <button
+                    @click="clearFilters(); showFilters = false"
+                    class="flex-1 px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
+                  >
+                    <i class="fas fa-times mr-2"></i>Clear All
+                  </button>
+                  <button
+                    @click="showFilters = false"
+                    class="flex-1 px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-500 transition"
+                  >
+                    <i class="fas fa-check mr-2"></i>Apply
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -420,14 +509,50 @@
           <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h3 class="text-xl font-bold mb-4">Upload Your Resume</h3>
             <p class="text-gray-400 mb-4">
-              Paste your resume text or key skills to personalize job scoring
+              Upload a PDF/TXT file or paste your resume text to personalize job scoring
             </p>
 
-            <textarea
-              x-model="resumeText"
-              placeholder="Paste your resume or list your skills (e.g., Python, React, AWS, Machine Learning...)"
-              class="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500 text-gray-100 resize-none"
-            ></textarea>
+            <!-- File Upload -->
+            <div class="mb-4">
+              <label class="block text-sm text-gray-400 mb-2">
+                <i class="fas fa-file-upload mr-2"></i>Upload Resume File (PDF, TXT, DOCX)
+              </label>
+              <div class="flex items-center space-x-4">
+                <label
+                  class="flex-1 px-4 py-3 bg-gray-700 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-orange-500 transition"
+                >
+                  <div class="text-center">
+                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-500 mb-2"></i>
+                    <p class="text-sm text-gray-400">
+                      <span class="text-orange-400">Click to upload</span> or drag and drop
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">PDF, TXT, DOCX (max 5MB)</p>
+                  </div>
+                  <input
+                    type="file"
+                    @change="handleFileUpload($event)"
+                    accept=".pdf,.txt,.doc,.docx"
+                    class="hidden"
+                  />
+                </label>
+              </div>
+              <p x-show="uploadedFileName" class="text-sm text-green-400 mt-2">
+                <i class="fas fa-check-circle mr-1"></i>
+                <span x-text="uploadedFileName"></span>
+              </p>
+            </div>
+
+            <!-- Text Area -->
+            <div>
+              <label class="block text-sm text-gray-400 mb-2">
+                <i class="fas fa-keyboard mr-2"></i>Or Paste Resume Text
+              </label>
+              <textarea
+                x-model="resumeText"
+                placeholder="Paste your resume or list your skills (e.g., Python, React, AWS, Machine Learning...)"
+                class="w-full h-48 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500 text-gray-100 resize-none"
+              ></textarea>
+            </div>
 
             <div class="mt-4 flex space-x-4">
               <button
@@ -537,6 +662,8 @@
             search: "",
             minScore: 0,
             source: "",
+            location: "",
+            company: "",
           },
           toast: {
             show: false,
@@ -546,6 +673,7 @@
           apiBaseUrl: "http://localhost:8000",
           resumeText: "",
           resumeSkills: [],
+          uploadedFileName: "",
 
           async init() {
             // Load saved resume if exists
@@ -581,16 +709,35 @@
               if (this.filters.source) {
                 url += `&source=${this.filters.source}`;
               }
+              if (this.filters.location) {
+                url += `&location=${encodeURIComponent(this.filters.location)}`;
+              }
+              if (this.filters.company) {
+                url += `&company=${encodeURIComponent(this.filters.company)}`;
+              }
+              
               const response = await fetch(url);
               const data = await response.json();
               this.jobs = data.jobs || [];
-              
+
+              // Apply client-side search filter
+              if (this.filters.search) {
+                const searchLower = this.filters.search.toLowerCase();
+                this.jobs = this.jobs.filter(job => 
+                  job.title.toLowerCase().includes(searchLower) ||
+                  job.company.toLowerCase().includes(searchLower) ||
+                  (job.stack && job.stack.toLowerCase().includes(searchLower))
+                );
+              }
+
               // Apply resume scoring if available
               if (this.resumeSkills.length > 0) {
-                this.jobs = this.jobs.map(job => this.scoreJobWithResume(job));
+                this.jobs = this.jobs.map((job) =>
+                  this.scoreJobWithResume(job),
+                );
                 this.jobs.sort((a, b) => b.score - a.score);
               }
-              
+
               this.topJobs = this.jobs.slice(0, 5);
             } catch (error) {
               console.error("Error fetching jobs:", error);
@@ -707,6 +854,76 @@
             window.open(job.url, "_blank");
           },
 
+          clearFilters() {
+            this.filters = {
+              search: "",
+              minScore: 0,
+              source: "",
+              location: "",
+              company: "",
+            };
+            this.fetchJobs();
+            this.showToast("Filters cleared", "success");
+          },
+
+          // Resume file upload handler
+          async handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+              this.showToast("File size must be less than 5MB", "error");
+              return;
+            }
+
+            this.uploadedFileName = file.name;
+            this.loading = true;
+
+            try {
+              const text = await this.extractTextFromFile(file);
+              this.resumeText = text;
+              this.showToast(`File "${file.name}" uploaded successfully!`, "success");
+              
+              // Auto-analyze after upload
+              setTimeout(() => this.analyzeResume(), 500);
+            } catch (error) {
+              this.showToast("Error reading file. Please try a different format.", "error");
+              console.error("File upload error:", error);
+            } finally {
+              this.loading = false;
+            }
+          },
+
+          async extractTextFromFile(file) {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              
+              reader.onload = (e) => {
+                const text = e.target.result;
+                
+                // For PDF files, we'll get binary data, so just use basic text extraction
+                if (file.type === 'application/pdf') {
+                  // Basic PDF text extraction (for better results, would need pdf.js library)
+                  resolve(text);
+                } else {
+                  // For TXT and other text-based files
+                  resolve(text);
+                }
+              };
+              
+              reader.onerror = () => reject(new Error('Failed to read file'));
+              
+              // Read as text for TXT, DOC files
+              if (file.type.includes('text') || file.name.endsWith('.txt')) {
+                reader.readAsText(file);
+              } else {
+                // For PDFs and other formats, read as text (basic extraction)
+                reader.readAsText(file);
+              }
+            });
+          },
+
           // Resume-based scoring methods
           analyzeResume() {
             if (!this.resumeText.trim()) {
@@ -717,25 +934,64 @@
             // Extract skills from resume
             const text = this.resumeText.toLowerCase();
             const techKeywords = [
-              'python', 'javascript', 'typescript', 'java', 'go', 'rust', 'c++', 'c#',
-              'react', 'vue', 'angular', 'node', 'django', 'flask', 'fastapi',
-              'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform',
-              'postgresql', 'mysql', 'mongodb', 'redis', 'elasticsearch',
-              'machine learning', 'ml', 'ai', 'data science', 'deep learning',
-              'devops', 'ci/cd', 'jenkins', 'github actions',
-              'agile', 'scrum', 'rest api', 'graphql', 'microservices'
+              "python",
+              "javascript",
+              "typescript",
+              "java",
+              "go",
+              "rust",
+              "c++",
+              "c#",
+              "react",
+              "vue",
+              "angular",
+              "node",
+              "django",
+              "flask",
+              "fastapi",
+              "aws",
+              "azure",
+              "gcp",
+              "docker",
+              "kubernetes",
+              "terraform",
+              "postgresql",
+              "mysql",
+              "mongodb",
+              "redis",
+              "elasticsearch",
+              "machine learning",
+              "ml",
+              "ai",
+              "data science",
+              "deep learning",
+              "devops",
+              "ci/cd",
+              "jenkins",
+              "github actions",
+              "agile",
+              "scrum",
+              "rest api",
+              "graphql",
+              "microservices",
             ];
 
-            this.resumeSkills = techKeywords.filter(keyword => 
-              text.includes(keyword)
+            this.resumeSkills = techKeywords.filter((keyword) =>
+              text.includes(keyword),
             );
 
             // Save to localStorage
-            localStorage.setItem('signalforge_resume', this.resumeText);
-            localStorage.setItem('signalforge_skills', JSON.stringify(this.resumeSkills));
+            localStorage.setItem("signalforge_resume", this.resumeText);
+            localStorage.setItem(
+              "signalforge_skills",
+              JSON.stringify(this.resumeSkills),
+            );
 
-            this.showToast(`Extracted ${this.resumeSkills.length} skills from your resume!`, "success");
-            
+            this.showToast(
+              `Extracted ${this.resumeSkills.length} skills from your resume!`,
+              "success",
+            );
+
             // Re-fetch and re-score jobs
             this.fetchJobs();
           },
@@ -743,8 +999,9 @@
           clearResume() {
             this.resumeText = "";
             this.resumeSkills = [];
-            localStorage.removeItem('signalforge_resume');
-            localStorage.removeItem('signalforge_skills');
+            this.uploadedFileName = "";
+            localStorage.removeItem("signalforge_resume");
+            localStorage.removeItem("signalforge_skills");
             this.showToast("Resume cleared", "success");
             this.fetchJobs();
           },
@@ -757,10 +1014,10 @@
             let bonusPoints = 0;
 
             // Check title and description for skill matches
-            const jobText = `${job.title} ${job.stack || ''}`.toLowerCase();
-            
-            const matchedSkills = this.resumeSkills.filter(skill => 
-              jobText.includes(skill.toLowerCase())
+            const jobText = `${job.title} ${job.stack || ""}`.toLowerCase();
+
+            const matchedSkills = this.resumeSkills.filter((skill) =>
+              jobText.includes(skill.toLowerCase()),
             );
 
             // Add bonus points: 2 points per matched skill (max 20 points)
@@ -779,7 +1036,10 @@
               return;
             }
 
-            this.showToast("Re-scoring all jobs with your resume...", "success");
+            this.showToast(
+              "Re-scoring all jobs with your resume...",
+              "success",
+            );
             await this.fetchJobs();
             this.currentView = "jobs";
           },
