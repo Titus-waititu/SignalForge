@@ -94,6 +94,7 @@ async def list_jobs(
     min_score: Optional[int] = Query(None, ge=0, le=100),
     location: Optional[str] = None,
     company: Optional[str] = None,
+    source: Optional[str] = None,
     posted_after: Optional[str] = None
 ):
     """
@@ -105,6 +106,7 @@ async def list_jobs(
         min_score: Minimum score filter
         location: Location filter
         company: Company filter
+        source: Job source filter (remoteok, linkedin, etc.)
         posted_after: Posted after date (ISO format)
     """
     db = get_db()
@@ -121,6 +123,9 @@ async def list_jobs(
         
         if company:
             query = query.filter(Job.company.ilike(f"%{company}%"))
+        
+        if source:
+            query = query.filter(Job.source == source)
         
         if posted_after:
             try:

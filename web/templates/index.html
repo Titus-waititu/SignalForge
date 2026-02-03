@@ -409,21 +409,26 @@
       </div>
 
       <!-- Resume View -->
-      <div x-show="currentView === 'resume'" class="container mx-auto px-4 py-8">
+      <div
+        x-show="currentView === 'resume'"
+        class="container mx-auto px-4 py-8"
+      >
         <h2 class="text-3xl font-bold mb-6">📄 Resume-Based Scoring</h2>
-        
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Resume Upload/Input -->
           <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h3 class="text-xl font-bold mb-4">Upload Your Resume</h3>
-            <p class="text-gray-400 mb-4">Paste your resume text or key skills to personalize job scoring</p>
-            
+            <p class="text-gray-400 mb-4">
+              Paste your resume text or key skills to personalize job scoring
+            </p>
+
             <textarea
               x-model="resumeText"
               placeholder="Paste your resume or list your skills (e.g., Python, React, AWS, Machine Learning...)"
               class="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500 text-gray-100 resize-none"
             ></textarea>
-            
+
             <div class="mt-4 flex space-x-4">
               <button
                 @click="analyzeResume()"
@@ -443,8 +448,11 @@
           <!-- Extracted Skills -->
           <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h3 class="text-xl font-bold mb-4">Extracted Skills & Keywords</h3>
-            
-            <div x-show="!resumeSkills.length" class="text-center py-12 text-gray-400">
+
+            <div
+              x-show="!resumeSkills.length"
+              class="text-center py-12 text-gray-400"
+            >
               <i class="fas fa-inbox text-6xl mb-4"></i>
               <p>No skills extracted yet. Add your resume to get started.</p>
             </div>
@@ -454,22 +462,35 @@
                 <p class="text-sm text-gray-400 mb-2">Technical Skills:</p>
                 <div class="flex flex-wrap gap-2">
                   <template x-for="skill in resumeSkills" :key="skill">
-                    <span class="px-3 py-1 bg-orange-600 rounded-full text-sm" x-text="skill"></span>
+                    <span
+                      class="px-3 py-1 bg-orange-600 rounded-full text-sm"
+                      x-text="skill"
+                    ></span>
                   </template>
                 </div>
               </div>
 
               <div class="mt-4 p-4 bg-gray-700 rounded-lg">
                 <p class="text-sm text-gray-400 mb-2">🎯 Scoring Impact:</p>
-                <p class="text-gray-300">Jobs matching your skills will receive <span class="text-orange-400 font-bold">+20 bonus points</span></p>
-                <p class="text-sm text-gray-400 mt-2">Threshold updated: Jobs scoring <span class="text-green-400 font-bold">60+</span> will trigger alerts</p>
+                <p class="text-gray-300">
+                  Jobs matching your skills will receive
+                  <span class="text-orange-400 font-bold"
+                    >+20 bonus points</span
+                  >
+                </p>
+                <p class="text-sm text-gray-400 mt-2">
+                  Threshold updated: Jobs scoring
+                  <span class="text-green-400 font-bold">60+</span> will trigger
+                  alerts
+                </p>
               </div>
 
               <button
                 @click="rescoreAllJobs()"
                 class="w-full px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500 transition font-semibold"
               >
-                <i class="fas fa-sync-alt mr-2"></i>Re-score All Jobs with Resume
+                <i class="fas fa-sync-alt mr-2"></i>Re-score All Jobs with
+                Resume
               </button>
             </div>
           </div>
@@ -528,12 +549,12 @@
 
           async init() {
             // Load saved resume if exists
-            const savedResume = localStorage.getItem('signalforge_resume');
+            const savedResume = localStorage.getItem("signalforge_resume");
             if (savedResume) {
               this.resumeText = savedResume;
               this.analyzeResume();
             }
-            
+
             await this.fetchStats();
             await this.fetchJobs();
             await this.fetchTrends();
@@ -557,9 +578,19 @@
               if (this.filters.minScore > 0) {
                 url += `&min_score=${this.filters.minScore}`;
               }
+              if (this.filters.source) {
+                url += `&source=${this.filters.source}`;
+              }
               const response = await fetch(url);
               const data = await response.json();
               this.jobs = data.jobs || [];
+              
+              // Apply resume scoring if available
+              if (this.resumeSkills.length > 0) {
+                this.jobs = this.jobs.map(job => this.scoreJobWithResume(job));
+                this.jobs.sort((a, b) => b.score - a.score);
+              }
+              
               this.topJobs = this.jobs.slice(0, 5);
             } catch (error) {
               console.error("Error fetching jobs:", error);
@@ -670,6 +701,87 @@
             setTimeout(() => {
               this.toast.show = false;
             }, 3000);
+          },
+
+          viewJobDetails(job) {
+            window.open(job.url, "_blank");
+          },
+
+          // Resume-based scoring methods
+          analyzeResume() {
+            if (!this.resumeText.trim()) {
+              this.showToast("Please enter your resume text", "error");
+              return;
+            }
+
+            // Extract skills from resume
+            const text = this.resumeText.toLowerCase();
+            const techKeywords = [
+              'python', 'javascript', 'typescript', 'java', 'go', 'rust', 'c++', 'c#',
+              'react', 'vue', 'angular', 'node', 'django', 'flask', 'fastapi',
+              'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform',
+              'postgresql', 'mysql', 'mongodb', 'redis', 'elasticsearch',
+              'machine learning', 'ml', 'ai', 'data science', 'deep learning',
+              'devops', 'ci/cd', 'jenkins', 'github actions',
+              'agile', 'scrum', 'rest api', 'graphql', 'microservices'
+            ];
+
+            this.resumeSkills = techKeywords.filter(keyword => 
+              text.includes(keyword)
+            );
+
+            // Save to localStorage
+            localStorage.setItem('signalforge_resume', this.resumeText);
+            localStorage.setItem('signalforge_skills', JSON.stringify(this.resumeSkills));
+
+            this.showToast(`Extracted ${this.resumeSkills.length} skills from your resume!`, "success");
+            
+            // Re-fetch and re-score jobs
+            this.fetchJobs();
+          },
+
+          clearResume() {
+            this.resumeText = "";
+            this.resumeSkills = [];
+            localStorage.removeItem('signalforge_resume');
+            localStorage.removeItem('signalforge_skills');
+            this.showToast("Resume cleared", "success");
+            this.fetchJobs();
+          },
+
+          scoreJobWithResume(job) {
+            if (!this.resumeSkills.length) return job;
+
+            // Create a copy of the job
+            const scoredJob = { ...job };
+            let bonusPoints = 0;
+
+            // Check title and description for skill matches
+            const jobText = `${job.title} ${job.stack || ''}`.toLowerCase();
+            
+            const matchedSkills = this.resumeSkills.filter(skill => 
+              jobText.includes(skill.toLowerCase())
+            );
+
+            // Add bonus points: 2 points per matched skill (max 20 points)
+            bonusPoints = Math.min(matchedSkills.length * 2, 20);
+
+            scoredJob.score = Math.min(job.score + bonusPoints, 100);
+            scoredJob.resumeMatch = matchedSkills.length > 0;
+            scoredJob.matchedSkills = matchedSkills;
+
+            return scoredJob;
+          },
+
+          async rescoreAllJobs() {
+            if (!this.resumeSkills.length) {
+              this.showToast("Please analyze your resume first", "error");
+              return;
+            }
+
+            this.showToast("Re-scoring all jobs with your resume...", "success");
+            await this.fetchJobs();
+            this.currentView = "jobs";
           },
 
           viewJobDetails(job) {
