@@ -134,42 +134,68 @@
           <div class="space-y-4">
             <template x-for="job in topJobs" :key="job.id">
               <div
-                class="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition cursor-pointer"
-                @click="viewJobDetails(job)"
+                class="bg-gradient-to-br from-gray-700 to-gray-750 rounded-lg p-5 hover:from-gray-600 hover:to-gray-650 transition-all duration-300 border border-gray-600 hover:border-orange-500 shadow-lg"
               >
-                <div class="flex items-center justify-between">
+                <div class="flex items-start justify-between mb-3">
                   <div class="flex-1">
-                    <h4 class="font-semibold text-lg" x-text="job.title"></h4>
-                    <p class="text-gray-400 text-sm" x-text="job.company"></p>
-                    <div class="flex items-center space-x-4 mt-2 text-sm">
-                      <span class="text-gray-400">
-                        <i class="fas fa-map-marker-alt mr-1"></i>
+                    <div class="flex items-center space-x-2 mb-2">
+                      <h4 class="font-bold text-xl text-white" x-text="job.title"></h4>
+                      <span
+                        class="px-2 py-1 rounded-full text-xs font-semibold"
+                        :class="job.source === 'remoteok' ? 'bg-blue-600 text-blue-100' : 'bg-purple-600 text-purple-100'"
+                        x-text="job.source"
+                      ></span>
+                    </div>
+                    <div class="flex items-center space-x-2 mb-2">
+                      <i class="fas fa-building text-orange-500 text-sm"></i>
+                      <p class="text-gray-300 font-medium" x-text="job.company"></p>
+                    </div>
+                    <div class="flex items-center space-x-4 text-sm text-gray-400">
+                      <span>
+                        <i class="fas fa-map-marker-alt mr-1 text-orange-500"></i>
                         <span x-text="job.location"></span>
                       </span>
-                      <span class="text-gray-400">
-                        <i class="fas fa-clock mr-1"></i>
+                      <span>
+                        <i class="fas fa-clock mr-1 text-orange-500"></i>
                         <span x-text="formatDate(job.posted_at)"></span>
                       </span>
                     </div>
                   </div>
-                  <div class="flex items-center space-x-4">
-                    <div class="text-right">
-                      <p
-                        class="text-2xl font-bold"
-                        :class="job.score >= 70 ? 'text-green-400' : job.score >= 50 ? 'text-yellow-400' : 'text-gray-400'"
-                        x-text="job.score"
-                      ></p>
-                      <p class="text-xs text-gray-400">score</p>
-                    </div>
-                    <a
-                      :href="job.url"
-                      target="_blank"
-                      class="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-500 transition"
-                      @click.stop
-                    >
-                      View Job
-                    </a>
+                  <div class="text-center min-w-[70px]">
+                    <p
+                      class="text-3xl font-black"
+                      :class="job.score >= 70 ? 'text-green-400' : job.score >= 50 ? 'text-yellow-400' : 'text-gray-400'"
+                      x-text="job.score"
+                    ></p>
+                    <p class="text-xs text-gray-400 uppercase">score</p>
                   </div>
+                </div>
+                
+                <!-- Tech Stack -->
+                <div x-show="job.stack && job.stack.length > 0" class="mb-3">
+                  <div class="flex flex-wrap gap-2">
+                    <template x-for="tech in (Array.isArray(job.stack) ? job.stack.slice(0, 5) : job.stack.split(',').slice(0, 5))" :key="tech">
+                      <span class="px-2 py-1 bg-gray-600 text-gray-200 rounded-full text-xs border border-gray-500">
+                        <span x-text="tech.trim()"></span>
+                      </span>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Description Preview -->
+                <div x-show="job.description" class="mb-3">
+                  <p class="text-gray-300 text-sm leading-relaxed" x-text="job.description ? job.description.substring(0, 150) + '...' : ''"></p>
+                </div>
+
+                <!-- Action Button -->
+                <div class="flex justify-end">
+                  <a
+                    :href="job.url"
+                    target="_blank"
+                    class="px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 rounded-lg hover:from-orange-500 hover:to-orange-400 transition-all duration-300 font-semibold shadow-lg hover:shadow-orange-500/50"
+                  >
+                    <i class="fas fa-external-link-alt mr-2"></i>View Full Job
+                  </a>
                 </div>
               </div>
             </template>
@@ -191,9 +217,9 @@
               <i class="fas fa-filter"></i>
               <span>Filters</span>
               <span
-                x-show="filters.minScore > 0 || filters.source || filters.location || filters.company"
+                x-show="filters.search || filters.minScore > 0 || filters.source || filters.location || filters.company"
                 class="px-2 py-0.5 bg-orange-600 rounded-full text-xs"
-                x-text="(filters.minScore > 0 ? 1 : 0) + (filters.source ? 1 : 0) + (filters.location ? 1 : 0) + (filters.company ? 1 : 0)"
+                x-text="(filters.search ? 1 : 0) + (filters.minScore > 0 ? 1 : 0) + (filters.source ? 1 : 0) + (filters.location ? 1 : 0) + (filters.company ? 1 : 0)"
               ></span>
               <i
                 class="fas fa-chevron-down text-sm"
@@ -245,15 +271,15 @@
                     <i class="fas fa-star mr-2"></i>Minimum Score
                   </label>
                   <select
-                    x-model="filters.minScore"
+                    x-model.number="filters.minScore"
                     @change="fetchJobs()"
                     class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-orange-500"
                   >
-                    <option value="0">All Scores</option>
-                    <option value="50">50+ (Good Match)</option>
-                    <option value="60">60+ (Great Match)</option>
-                    <option value="70">70+ (Excellent Match)</option>
-                    <option value="80">80+ (Perfect Match)</option>
+                    <option :value="0">All Scores</option>
+                    <option :value="50">50+ (Good Match)</option>
+                    <option :value="60">60+ (Great Match)</option>
+                    <option :value="70">70+ (Excellent Match)</option>
+                    <option :value="80">80+ (Perfect Match)</option>
                   </select>
                 </div>
 
@@ -305,53 +331,86 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4">
+        <div class="grid grid-cols-1 gap-6">
           <template x-for="job in jobs" :key="job.id">
             <div
-              class="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-orange-500 transition"
+              class="bg-gradient-to-br from-gray-800 to-gray-850 rounded-xl p-6 border-2 border-gray-700 hover:border-orange-500 transition-all duration-300 shadow-lg hover:shadow-orange-500/20"
             >
-              <div class="flex items-start justify-between">
+              <!-- Header Section -->
+              <div class="flex items-start justify-between mb-4">
                 <div class="flex-1">
-                  <div class="flex items-center space-x-3 mb-2">
-                    <h3 class="text-xl font-semibold" x-text="job.title"></h3>
+                  <div class="flex items-center flex-wrap gap-3 mb-2">
+                    <h3 class="text-2xl font-bold text-white" x-text="job.title"></h3>
                     <span
-                      class="px-2 py-1 bg-gray-700 rounded text-xs"
+                      class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
+                      :class="job.source === 'remoteok' ? 'bg-blue-600 text-blue-100' : 'bg-purple-600 text-purple-100'"
                       x-text="job.source"
                     ></span>
                   </div>
-                  <p class="text-gray-300 mb-3" x-text="job.company"></p>
-                  <div class="flex flex-wrap gap-4 text-sm text-gray-400">
-                    <span>
-                      <i class="fas fa-map-marker-alt mr-1"></i>
-                      <span x-text="job.location"></span>
-                    </span>
-                    <span>
-                      <i class="fas fa-clock mr-1"></i>
-                      <span x-text="formatDate(job.posted_at)"></span>
-                    </span>
-                    <span x-show="job.stack">
-                      <i class="fas fa-code mr-1"></i>
-                      <span x-text="job.stack"></span>
-                    </span>
+                  <div class="flex items-center space-x-2 mb-3">
+                    <i class="fas fa-building text-orange-500"></i>
+                    <p class="text-lg text-gray-200 font-medium" x-text="job.company"></p>
                   </div>
                 </div>
-                <div class="flex items-center space-x-4 ml-6">
-                  <div class="text-center">
-                    <div
-                      class="text-3xl font-bold"
-                      :class="job.score >= 70 ? 'text-green-400' : job.score >= 50 ? 'text-yellow-400' : 'text-gray-400'"
-                      x-text="job.score"
-                    ></div>
-                    <div class="text-xs text-gray-400">score</div>
-                  </div>
-                  <a
-                    :href="job.url"
-                    target="_blank"
-                    class="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-500 transition whitespace-nowrap"
-                  >
-                    <i class="fas fa-external-link-alt mr-2"></i>View
-                  </a>
+                <!-- Score Badge -->
+                <div class="text-center min-w-[80px]">
+                  <div
+                    class="text-4xl font-black mb-1"
+                    :class="job.score >= 70 ? 'text-green-400' : job.score >= 50 ? 'text-yellow-400' : 'text-gray-400'"
+                    x-text="job.score"
+                  ></div>
+                  <div class="text-xs text-gray-400 uppercase tracking-wider">Score</div>
                 </div>
+              </div>
+
+              <!-- Info Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div class="flex items-center space-x-2 text-gray-300">
+                  <i class="fas fa-map-marker-alt text-orange-500 w-4"></i>
+                  <span class="font-medium" x-text="job.location"></span>
+                </div>
+                <div class="flex items-center space-x-2 text-gray-300">
+                  <i class="fas fa-clock text-orange-500 w-4"></i>
+                  <span x-text="formatDate(job.posted_at)"></span>
+                </div>
+              </div>
+
+              <!-- Tech Stack -->
+              <div x-show="job.stack && job.stack.length > 0" class="mb-4">
+                <div class="flex items-center space-x-2 mb-2">
+                  <i class="fas fa-code text-orange-500"></i>
+                  <span class="text-sm text-gray-400 font-semibold uppercase tracking-wide">Tech Stack</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <template x-for="tech in (Array.isArray(job.stack) ? job.stack : job.stack.split(','))" :key="tech">
+                    <span class="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm font-medium border border-gray-600 hover:border-orange-500 transition">
+                      <span x-text="tech.trim()"></span>
+                    </span>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div x-show="job.description" class="mb-4">
+                <div class="flex items-center space-x-2 mb-2">
+                  <i class="fas fa-file-alt text-orange-500"></i>
+                  <span class="text-sm text-gray-400 font-semibold uppercase tracking-wide">Description</span>
+                </div>
+                <div 
+                  class="text-gray-300 leading-relaxed bg-gray-900/50 rounded-lg p-4 border border-gray-700"
+                  x-html="job.description ? job.description.substring(0, 500) + (job.description.length > 500 ? '...' : '') : 'No description available'"
+                ></div>
+              </div>
+
+              <!-- Action Button -->
+              <div class="flex justify-end">
+                <a
+                  :href="job.url"
+                  target="_blank"
+                  class="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-500 rounded-lg hover:from-orange-500 hover:to-orange-400 transition-all duration-300 font-semibold text-white shadow-lg hover:shadow-orange-500/50 transform hover:scale-105"
+                >
+                  <i class="fas fa-external-link-alt mr-2"></i>View Full Job
+                </a>
               </div>
             </div>
           </template>

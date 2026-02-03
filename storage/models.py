@@ -18,6 +18,7 @@ class Job(Base):
     title = Column(String, nullable=False)
     company = Column(String, nullable=False)
     location = Column(String, nullable=False)
+    description = Column(Text, nullable=True)  # Job description
     stack = Column(Text, nullable=True)  # JSON string of tech stack
     url = Column(String, nullable=False)
     posted_at = Column(DateTime, nullable=False)
@@ -40,6 +41,7 @@ class Job(Base):
             "title": self.title,
             "company": self.company,
             "location": self.location,
+            "description": self.description,
             "stack": self.stack.split(",") if self.stack else [],
             "url": self.url,
             "posted_at": self.posted_at.isoformat() if self.posted_at else None,
