@@ -27,6 +27,7 @@ def normalize_job(raw_data: Dict[str, Any]) -> Dict[str, Any]:
             "title": _normalize_text(raw_data.get("title", "")),
             "company": _normalize_text(raw_data.get("company", "Unknown")),
             "location": _normalize_location(raw_data.get("location", "")),
+            "description": raw_data.get("description", ""),  # Keep description as-is
             "stack": _normalize_stack(raw_data.get("stack", [])),
             "url": _normalize_url(raw_data.get("url", "")),
             "posted_at": _normalize_date(raw_data.get("posted_at")),
